@@ -1,0 +1,30 @@
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local deleter = replicatedStorage:FindFirstChild("deleter")
+
+local breakable = {"dogmodel", "catmodel", "amongusmodel"}
+
+local function playerinput()
+	UIS.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Keyboard then
+			local keyPressed = input.KeyCode
+			local hoveredObject = Mouse.Target
+			print(keyPressed, hoveredObject)
+
+			if table.find(breakable, hoveredObject.Name) then
+				local objectName = hoveredObject.Name
+				local firstLetter = objectName:sub(1, 1):lower()
+
+				if firstLetter == keyPressed.Name:lower() then
+					deleter:InvokeServer(hoveredObject) -- send the object itself
+				end
+			end
+		end
+	end)
+end
+
+playerinput()
