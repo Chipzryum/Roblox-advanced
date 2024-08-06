@@ -1,0 +1,18 @@
+local invisiblePart = script.Parent
+
+invisiblePart.Touched:Connect(function(hit)
+	local character = hit.Parent
+	local humanoid = character:FindFirstChild("Humanoid")
+
+	if humanoid then
+		print("touched")
+		local player = game.Players:GetPlayerFromCharacter(character)
+		local sound = workspace.Assets:FindFirstChild("Shop Theme")
+
+		if sound then
+			sound:Play()
+		end
+	end
+end)
+
+
