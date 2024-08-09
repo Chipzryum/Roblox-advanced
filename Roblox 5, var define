@@ -1,0 +1,26 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local aimCf = CFrame.new()
+local camera = workspace.CurrentCamera
+local tempAim = CFrame.new()
+local ISAiming = false
+local currentSwatAMT = 2
+local swayAMT = 2
+local aimswayAMT = -1.5
+local swayCF = CFrame.new()
+local lastCameraCF = CFrame.new()
+local framework = {
+	inventory = {
+		"Electo";
+		"The shocker";
+		"THE DOOM";
+		"Knife";
+	};
+
+	module = nil;
+	viewmodel = nil;
+	currentSlot = 1;
+}
