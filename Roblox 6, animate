@@ -1,0 +1,18 @@
+function loadSlot(Item)
+	local viewmodelFolder = game.ReplicatedStorage.Viewmoduls
+	local moduleFolder = game.ReplicatedStorage.module
+
+	for i, v in pairs(camera:GetChildren()) do
+		if v:IsA("Model") then
+			v:Destroy()
+		end
+	end
+
+	if moduleFolder:FindFirstChild(Item) then
+		framework.module = require(moduleFolder:FindFirstChild(Item))
+		if viewmodelFolder:FindFirstChild(Item) then
+			framework.viewmodel = viewmodelFolder:FindFirstChild(Item):Clone()
+			framework.viewmodel.Parent = camera
+		end	
+	end
+end
