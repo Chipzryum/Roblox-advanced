@@ -1,0 +1,39 @@
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local character = script.Parent
+local humanoid = character:WaitForChild("Humanoid")
+local camera = game.Workspace.Camera
+
+UserInputService.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		if humanoid then
+			humanoid.WalkSpeed = 25
+		end
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		if humanoid then
+			humanoid.WalkSpeed = 12
+		end
+	end
+
+end)
+
+RunService.RenderStepped:Connect(function()
+	if humanoid then
+		if humanoid.MoveDirection.Magnitude > 0 then
+			local headbobY = math.sin(tick() * 7) * .2
+			if humanoid.WalkSpeed == 12 then
+				headbobY = math.sin(tick() * 7) * .2
+			elseif humanoid.WalkSpeed == 25 then
+				headbobY = math.sin(tick() * 18) * .3
+			end
+			
+			local bob = Vector3.new(0, headbobY , 0)
+			humanoid.CameraOffset = humanoid.CameraOffset:Lerp(bob , 1)
+		else
+			humanoid.CameraOffset = humanoid.CameraOffset:Lerp(Vector3.new(), 1)
+		end
+	end
+end)
