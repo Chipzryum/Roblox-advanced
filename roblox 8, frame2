@@ -1,0 +1,138 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local aimCf = CFrame.new()
+local camera = workspace.CurrentCamera
+local tempAim = CFrame.new()
+local ISAiming = false
+local currentSwatAMT = 2
+local swayAMT = 2
+local aimswayAMT = -1.5
+local swayCF = CFrame.new()
+local lastCameraCF = CFrame.new()
+local FireAnim = nil
+local framework = {
+	inventory = {
+		"Electo";
+		"The shocker";
+		"THE DOOM";
+		"Knife";
+	};
+
+	module = nil;
+	viewmodel = nil;
+	currentSlot = 1;
+}
+
+function loadSlot(Item)
+	local viewmodelFolder = game.ReplicatedStorage.Viewmoduls
+	local moduleFolder = game.ReplicatedStorage.module
+
+	for i, v in pairs(camera:GetChildren()) do
+		if v:IsA("Model") then
+			v:Destroy()
+		end
+	end
+
+	if moduleFolder:FindFirstChild(Item) then
+		framework.module = require(moduleFolder:FindFirstChild(Item))		
+		if viewmodelFolder:FindFirstChild(Item) then
+			framework.viewmodel = viewmodelFolder:FindFirstChild(Item):Clone()
+			framework.viewmodel.Parent = camera
+			
+			FireAnim = Instance.new("Animation")
+			FireAnim.Parent = framework.viewmodel
+			FireAnim.Name = "Fire"
+			FireAnim.AnimationId = framework.module.FireAnim
+			FireAnim = framework.viewmodel.AnimationController.Animator:LoadAnimation(FireAnim)
+		end	
+	end
+end
+
+RunService.RenderStepped:Connect(function()
+	local rot = camera.CFrame:ToObjectSpace(lastCameraCF)
+	local X,Y,Z = rot:ToOrientation()
+	swayCF = swayCF:Lerp(CFrame.Angles(math.sin(X) * currentSwatAMT, math.sin(Y) * currentSwatAMT, 0), .01)
+	lastCameraCF = camera.CFrame
+	local humanoid = character:WaitForChild("Humanoid")
+	
+	if humanoid then
+		local Boboffset = CFrame.new()
+		
+		if humanoid.MoveDirection.Magnitude > 0 then
+			if humanoid.WalkSpeed == 12 then
+				Boboffset = Boboffset:Lerp(CFrame.new((math.cos(tick() * 3)) * .7, -humanoid.CameraOffset.Y/3, -humanoid.CameraOffset.Z/3) * CFrame.Angles(math.cos(tick() * -4) * -0.5, math.sin(tick() * -4) * .05, 0),.01) * CFrame.Angles(math.cos(tick() * -3)* -.05, math.sin(tick()*.75) * .001, 0)
+			elseif humanoid.WalkSpeed == 25 then
+				Boboffset = Boboffset:Lerp( CFrame.new((math.cos(tick() * 8)) * .1, -humanoid.CameraOffset.Y/3, -humanoid.CameraOffset.Z/3) * CFrame.Angles(math.cos(tick() * -8) * -.1, math.sin(tick() * -8) * .1, 0),1) * CFrame.Angles(math.cos(tick() * -6)* -.1, math.sin(tick()*2) * .15, 0)
+
+			end
+		else
+			Boboffset = CFrame.new(0, -humanoid.CameraOffset.Y/3, 0)
+		end
+
+		for i, v in pairs(camera:GetChildren()) do
+			if v:IsA("Model") then
+				v:SetPrimaryPartCFrame(camera.CFrame * swayCF * aimCf * Boboffset)
+			end
+		end
+	end
+	
+	if ISAiming and framework.viewmodel ~= nil and framework.module.canAim then
+		local offset = framework.viewmodel.Aimpart.CFrame:ToObjectSpace(framework.viewmodel.PrimaryPart.CFrame)
+		tempAim = aimCf
+		aimCf = aimCf:Lerp(offset,framework.module.AimSmooth)
+		currentSwatAMT = aimswayAMT
+		
+	else
+		local offset = CFrame.new()
+		tempAim = aimCf
+		aimCf = aimCf:Lerp(offset,framework.module.AimSmooth)
+		currentSwatAMT = swayAMT
+	end
+end)
+
+loadSlot(framework.inventory[1])
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then return end
+
+	if input.KeyCode == Enum.KeyCode.One then
+		if framework.currentSlot ~= 1 then
+			loadSlot(framework.inventory[1])
+			framework.currentSlot = 1
+		end
+	end
+
+	if input.KeyCode == Enum.KeyCode.Two then
+		if framework.currentSlot ~= 2 then
+			loadSlot(framework.inventory[2])
+			framework.currentSlot = 2
+		end
+	end
+	
+	if input.KeyCode == Enum.KeyCode.Three then
+		if framework.currentSlot ~= 3 then
+			loadSlot(framework.inventory[3])
+			framework.currentSlot = 3
+		end
+	end
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			ISAiming = true
+	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		FireAnim:Play()
+	end
+end)
+
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		aimCf = tempAim
+		ISAiming = false
+	end
+
+end)
+
+	
