@@ -1,0 +1,16 @@
+local x = true
+
+function tween(obj, dur, cmd)
+    game:GetService('TweenService'):Create(obj, dur, cmd):Play()
+end
+
+workspace.Camera.CameraType = Enum.CameraType.Scriptable
+tween(workspace.Camera, TweenInfo.new(1), {CFrame = workspace.Menu.Menu.MenuCam.CFrame})
+
+while x == true do
+    local cam = workspace.Menu.Menu:FindFirstChild("MenuCam")
+    if cam then
+        cam.CFrame = cam.CFrame * CFrame.new(1, 0, 0)
+    end
+    wait(0.1)
+end
