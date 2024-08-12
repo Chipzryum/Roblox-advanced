@@ -1,0 +1,13 @@
+x = true
+function tween(obj, dur, cmd)
+	game:GetService('TweenService'):Create(obj, dur, cmd):Play()
+end
+
+workspace.Camera.CameraType = Enum.CameraType.Scriptable
+tween(workspace.Camera, TweenInfo.new(1), {CFrame = workspace.Menu.Menu.MenuCam.CFrame})
+if CFrame.Touched:Connect()
+while x == true: do
+		Cam =  workspace.Menu.Menu.:FindFirstChild("MenuCam")
+		Cam.CFrame.X += 1
+	end
+end
