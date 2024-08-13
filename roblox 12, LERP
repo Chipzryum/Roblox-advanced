@@ -1,0 +1,20 @@
+local cylinder = script.Parent
+local workspace = game.Workspace
+
+randomLocation = 
+{
+	workspace.loca1,
+	workspace.loca2,
+	workspace.loca3,
+	workspace.loca4,
+	workspace.loca5,
+	workspace.loca6,
+	workspace.loca7,
+	workspace.loca8,
+	workspace.loca9, 
+	workspace.loca10,
+	workspace.loca11,
+	workspace.loca12,
+	workspace.loca13
+}
+
