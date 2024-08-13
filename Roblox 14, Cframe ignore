@@ -1,0 +1,77 @@
+local Players = game:GetService("Players")
+local playerposx = 0
+local playerposy = 0
+local rainchosen = nil
+
+-- DOG AND CAT RAIN
+local tower = {"dog", "cat", "amogu"}
+
+local locationt1 = game.Workspace.t1.t1loca.CFrame.Position
+local locationt2 = game.Workspace.t2.t2loca.CFrame.Position
+local locationt3 = game.Workspace.t3.t3loca.CFrame.Position
+local baseplate = game.Workspace.Baseplate
+local randlocation = {locationt1, locationt2, locationt3}
+
+local function cloneModelWithUniqueName(model, index)
+	local clonedModel = model:Clone()
+	clonedModel.Name = model.Name .. "_" .. tostring(index)  -- Append a unique identifier
+	clonedModel.Parent = game.Workspace
+
+	-- Check if the cloned model has any children and a PrimaryPart
+	if #clonedModel:GetChildren() == 0 or not clonedModel.PrimaryPart then
+		clonedModel:Destroy()
+		return nil
+	end
+
+	return clonedModel
+end
+
+local x = 0
+local function towerain()
+	while x < 125 do
+		-- Disable collision for locations
+		game.Workspace.t1.t1loca.CanCollide = false
+		game.Workspace.t2.t2loca.CanCollide = false
+		game.Workspace.t3.t3loca.CanCollide = false
+
+		local dog = game.Workspace.storage:FindFirstChild("dog")
+		local cat = game.Workspace.storage:FindFirstChild("cat")
+		local amongus = game.Workspace.storage:FindFirstChild("amongus")
+		local rain = tower[math.random(1, #tower)]
+		x += 1
+
+		wait(0.1) -- Short wait between each iteration
+		local chosenLocation = randlocation[math.random(1, #randlocation)]
+		if not chosenLocation then
+			warn("Chosen location is nil!")
+			break
+		end
+
+		local clonedmodel
+		if rain == "dog" and dog then
+			clonedmodel = cloneModelWithUniqueName(dog, x)
+		elseif rain == "cat" and cat then
+			clonedmodel = cloneModelWithUniqueName(cat, x)
+		elseif rain == "amogu" and amongus then
+			clonedmodel = cloneModelWithUniqueName(amongus, x)
+		end
+
+		-- Only proceed if the cloned model is valid
+		if clonedmodel and clonedmodel.PrimaryPart then
+			clonedmodel:SetPrimaryPartCFrame(CFrame.new(chosenLocation))
+
+			clonedmodel.PrimaryPart.Touched:Connect(function(rains)
+				if rains == baseplate then
+					clonedmodel:Destroy()
+				end
+			end)
+		else
+			-- Skip to the next iteration if the model is invalid
+			warn("Invalid model or its PrimaryPart is nil, skipping this iteration.")
+		end
+	end
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+	towerain()
+end)
