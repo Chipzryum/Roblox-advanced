@@ -1,0 +1,62 @@
+local tube = script.Parent
+local workspace = game.Workspace
+
+local randomLocation = 
+	{
+		workspace.loca1,
+		workspace.loca2,
+		workspace.loca3,
+		workspace.loca4,
+		workspace.loca5,
+		workspace.loca6,
+		workspace.loca7,
+		workspace.loca8,
+		workspace.loca9, 
+		workspace.loca10,
+		workspace.loca11,
+		workspace.loca12
+	}
+
+-- Function to smoothly move the tube to a new location
+local function moveTubeTo(newCFrame, duration)
+	-- Ensure the tube has a PrimaryPart
+	if not tube.PrimaryPart then
+		warn("Tube does not have a PrimaryPart set!")
+		return
+	end
+
+	-- Get the initial CFrame of the tube's primary part
+	local initialCFrame = tube.PrimaryPart.CFrame
+
+	-- Determine the start time
+	local startTime = tick()
+
+	while tick() - startTime < duration do
+		-- Calculate the lerped CFrame based on elapsed time
+		local alpha = (tick() - startTime) / duration
+		local lerpedCFrame = initialCFrame:Lerp(newCFrame, alpha)
+		
+		-- Update each part's CFrame within the tube
+		for _, part in ipairs(tube:GetChildren()) do
+			if part:IsA("BasePart") then
+				local offset = initialCFrame:toObjectSpace(part.CFrame)
+				part.CFrame = lerpedCFrame * offset
+			end
+		end
+
+		wait(0.01)  -- Small delay to smooth out the animation
+	end
+
+	-- Ensure the tube is exactly at the new position at the end
+	for _, part in ipairs(tube:GetChildren()) do
+		if part:IsA("BasePart") then
+			local offset = initialCFrame:toObjectSpace(part.CFrame)
+			part.CFrame = newCFrame * offset
+		end
+	end
+end
+
+for _, location in ipairs(randomLocation) do
+	moveTubeTo(location.CFrame, 2)  -- Move to each location over 2 seconds
+	wait(2)  -- Wait 2 seconds before moving to the next location
+end
