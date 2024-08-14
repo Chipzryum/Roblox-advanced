@@ -1,0 +1,66 @@
+local tube = script.Parent
+local workspace = game.Workspace
+
+local randomLocation = 
+	{
+		workspace.loca1,
+		workspace.loca2,
+		workspace.loca3,
+		workspace.loca4,
+		workspace.loca5,
+		workspace.loca6,
+		workspace.loca7,
+		workspace.loca8,
+		workspace.loca9, 
+		workspace.loca10,
+		workspace.loca11,
+		workspace.loca12
+	}
+
+-- Function to get a random location
+local function getRandomLocation(locations)
+	return locations[math.random(1, #locations)]
+end
+
+-- Function to check if all children have moved correctly
+local function checkChildrenMoved(model, targetPosition)
+	local allMoved = true
+	for _, child in ipairs(model:GetChildren()) do
+		if child:IsA("BasePart") then
+			local expectedPosition = targetPosition + (child.Position - model.PrimaryPart.Position)
+			if (child.Position - expectedPosition).magnitude > 0.01 then
+				allMoved = false
+				warn(child.Name .. " did not move correctly! Expected: " .. tostring(expectedPosition) .. " Actual: " .. tostring(child.Position))
+			end
+		end
+	end
+	return allMoved
+end
+
+-- Get a random location from the list
+local targetLocation = getRandomLocation(randomLocation)
+
+-- Adjust the target location to keep the y-coordinate at 41.5
+local targetPosition = Vector3.new(targetLocation.Position.X, 41.5, targetLocation.Position.Z)
+
+-- Ensure the tube model has a PrimaryPart set
+if tube.PrimaryPart then
+	-- Calculate the rotation in radians
+	local rotationCFrame = CFrame.Angles(math.rad(-90), math.rad(0), math.rad(0))
+
+	-- Calculate the new CFrame for the tube, maintaining the specified angle
+	local newCFrame = CFrame.new(targetPosition) * rotationCFrame
+
+	-- Move the tube to the new location with the specified rotation
+	tube:SetPrimaryPartCFrame(newCFrame)
+
+	-- Debug check to verify all children moved correctly
+	local allMoved = checkChildrenMoved(tube, targetPosition)
+	if allMoved then
+		print("All children moved correctly.")
+	else
+		warn("Some children did not move correctly. Check for potential clipping issues.")
+	end
+else
+	warn("No PrimaryPart set for the model!")
+end
