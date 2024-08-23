@@ -1,0 +1,19 @@
+local tool = script.Parent
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://116904944297640"
+
+local debounce = false
+
+tool.Activated:Connect(function()
+	print("Tool Activated")
+	if debounce == false then
+		debounce = true
+		print(debounce)
+		tool.Parent:FindFirstChild("Humanoid").Animator:LoadAnimation(animation):Play()
+		
+		wait(3)
+		
+		debounce = false
+
+	end
+end)
