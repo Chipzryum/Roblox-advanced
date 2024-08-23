@@ -1,0 +1,29 @@
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://18275809125"
+
+local animationTrack = nil
+
+-- Function to play the animation
+local function playAnimation()
+    if humanoid and tool:IsDescendantOf(character) then
+        if animationTrack then
+            animationTrack:Stop() -- Stop the previous animation if any
+        end
+        animationTrack = humanoid:LoadAnimation(animation)
+        animationTrack:Play()
+    end
+end
+
+-- Event when the tool is equipped
+tool.Equipped:Connect(function()
+    -- Detect when the player clicks
+    tool.Activated:Connect(function()
+        playAnimation()
+    end)
+end)
