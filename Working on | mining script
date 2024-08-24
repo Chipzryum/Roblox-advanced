@@ -1,0 +1,39 @@
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local part = script.Parent:FindFirstChild("Part") or script.Parent:FindFirstChild("part")
+if not part then
+    warn("Part not found!")
+    return
+end
+
+local holding = false
+local breakTime = 3 -- Time in seconds to break the block
+
+local function onInputBegan(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        holding = true
+        local startTime = tick()
+
+        -- Update loop using RunService
+        local connection
+        connection = RunService.RenderStepped:Connect(function()
+            if holding and tick() - startTime >= breakTime then
+                part:Destroy()
+                holding = false
+                connection:Disconnect() -- Disconnect the loop once the part is destroyed
+            elseif not holding then
+                connection:Disconnect() -- Disconnect the loop if holding is false
+            end
+        end)
+    end
+end
+
+local function onInputEnded(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        holding = false
+    end
+end
+
+UserInputService.InputBegan:Connect(onInputBegan)
+UserInputService.InputEnded:Connect(onInputEnded)
