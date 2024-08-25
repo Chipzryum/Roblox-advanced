@@ -1,0 +1,96 @@
+local MiningDataStore = game:GetService("DataStoreService"):GetDataStore("MiningDataStore")
+local MineEvent = game.ReplicatedStorage:WaitForChild("Mining")
+
+game.Players.PlayerAdded:Connect(function(plr)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = plr
+
+	local Cash = Instance.new("NumberValue")
+	Cash.Name = "Cash"
+	Cash.Value = 0
+	Cash.Parent = leaderstats
+
+	local Key = plr.UserId
+
+	local success, errormessage = pcall(function()
+		local Data = MiningDataStore:GetAsync(Key)
+
+		if Data then
+			Cash.Value = Data[1]
+		end
+	end)
+
+	while not success do
+		wait(5)
+		success, errormessage = pcall(function()
+			local Data = MiningDataStore:GetAsync(Key)
+			if Data then
+				Cash.Value = Data[1]
+			end
+		end)
+	end
+end)
+
+game.Players.PlayerRemoving:Connect(function(plr)
+	local Key = plr.UserId
+
+	local success, errormessage = pcall(function()
+		MiningDataStore:SetAsync(Key, {plr.leaderstats.Cash.Value})
+	end)
+
+	while not success do
+		wait(5)
+		success, errormessage = pcall(function()
+			MiningDataStore:SetAsync(Key, {plr.leaderstats.Cash.Value})
+		end)
+	end
+end)
+
+MineEvent.OnServerEvent:Connect(function(plr, ore, tool)
+	if tool and tool.Name == "Pickaxe" then  -- Check if the tool is a pickaxe
+		if ore.Name == "grassBlock" then
+			if ore.Durability.Value <= 0 then
+				ore:Destroy()
+				plr.leaderstats.Cash.Value = plr.leaderstats.Cash.Value + 5
+			elseif ore.Durability.Value > 0 then
+				ore.Durability.Value = ore.Durability.Value - 5 
+			end
+		end
+	end
+end)
+
+-- local script
+
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local MineEvent = game.ReplicatedStorage:WaitForChild("Mining")
+
+tool.Activated:Connect(function()
+	local target = mouse.Target
+	MineEvent:FireServer(target, tool)
+end)
+
+
+-- mining animation part
+local animation = Instance.new("Animation")
+
+animation.AnimationId = "rbxassetid://116904944297640"
+
+local debounce = false
+
+tool.Activated:Connect(function()
+	print("Tool Activated")
+	if debounce == false then
+		debounce = true
+		print(debounce)
+		tool.Parent:FindFirstChild("Humanoid").Animator:LoadAnimation(animation):Play()
+		
+		
+		debounce = false
+
+	end
+end)
+
