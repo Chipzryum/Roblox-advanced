@@ -1,0 +1,80 @@
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local MineEvent = game.ReplicatedStorage:WaitForChild("Mining")
+
+local isFirstClick = true  -- first click check
+
+-- display health bar
+local function createHealthBar(ore)
+	-- billboard
+	local billboardGui = Instance.new("BillboardGui")
+	billboardGui.Name = "HealthBarGui"
+	billboardGui.Adornee = ore
+	billboardGui.Parent = ore
+	billboardGui.Size = UDim2.new(3, 0, 0.3, 0)  --size
+	billboardGui.StudsOffset = Vector3.new(0, 5, 0)  -- offset
+	billboardGui.AlwaysOnTop = true
+
+	--  background
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(1, 0, 1, 0)
+	frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	frame.BackgroundTransparency = 0.5
+	frame.Parent = billboardGui
+
+	--  HealthBar
+	local healthBar = Instance.new("Frame")
+	healthBar.Name = "HealthBar"
+	healthBar.Size = UDim2.new(1, 0, 1, 0)
+	healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	healthBar.Parent = frame
+
+	return healthBar
+end
+
+-- Function to update the health bar in GUI
+local function updateHealthBar(healthBar, currentDurability, maxDurability)
+	local healthPercentage = currentDurability / maxDurability
+	healthBar:TweenSize(UDim2.new(healthPercentage, 0, 1, 0), "Out", "Quad", 0.5, true)
+end
+
+--  handle tool activation
+local function onToolActivated()
+	local target = mouse.Target
+	if target and target:FindFirstChild("Durability") then
+		if isFirstClick then
+			-- Create the health bar on the first click
+			local healthBar = createHealthBar(target)
+			-- Optionally, you can store the health bar reference in the block if needed
+			target:SetAttribute("HealthBar", healthBar)
+		end
+
+		-- Send `isFirstClick` value to the server
+		MineEvent:FireServer(target, tool, isFirstClick)
+
+		-- After sending the first click, set isFirstClick to false
+		isFirstClick = false
+	end
+end
+
+-- Connect the function to the tool's Activated event
+tool.Activated:Connect(onToolActivated)
+
+-- Mining animation part
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://116904944297640"
+
+local debounce = false
+
+tool.Activated:Connect(function()
+	if not debounce then
+		debounce = true
+		tool.Parent:FindFirstChild("Humanoid").Animator:LoadAnimation(animation):Play()
+
+		wait(0.5)  -- Adding a short delay
+
+		debounce = false
+	end
+end)
