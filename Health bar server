@@ -1,0 +1,73 @@
+local MiningDataStore = game:GetService("DataStoreService"):GetDataStore("MiningDataStore")
+local MineEvent = game.ReplicatedStorage:WaitForChild("Mining")
+
+game.Players.PlayerAdded:Connect(function(plr)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = plr
+
+	local Cash = Instance.new("NumberValue")
+	Cash.Name = "Cash"
+	Cash.Value = 0
+	Cash.Parent = leaderstats
+
+	local Key = plr.UserId
+
+	local success, errormessage = pcall(function()
+		local Data = MiningDataStore:GetAsync(Key)
+
+		if Data then
+			Cash.Value = Data[1]
+		end
+	end)
+
+	while not success do
+		wait(5)
+		success, errormessage = pcall(function()
+			local Data = MiningDataStore:GetAsync(Key)
+			if Data then
+				Cash.Value = Data[1]
+			end
+		end)
+	end
+end)
+
+game.Players.PlayerRemoving:Connect(function(plr)
+	local Key = plr.UserId
+
+	local success, errormessage = pcall(function()
+		MiningDataStore:SetAsync(Key, {plr.leaderstats.Cash.Value})
+	end)
+
+	while not success do
+		wait(5)
+		success, errormessage = pcall(function()
+			MiningDataStore:SetAsync(Key, {plr.leaderstats.Cash.Value})
+		end)
+	end
+end)
+
+local primaryTool = "Pickaxe"  -- Primary tool's name
+
+MineEvent.OnServerEvent:Connect(function(plr, ore, tool, isFirstClick)
+	if ore.Name == "grassBlock" then
+		local damage = 2  -- Default damage for non-primary tools
+
+		if tool and tool.Name == primaryTool then
+			if isFirstClick then
+				damage = 5  -- Increased damage for the primary tool on the first click
+			else
+				damage = 5  -- Normal damage for the primary tool
+			end
+		end
+
+		if ore.Durability.Value <= damage then
+			ore:Destroy()
+			plr.leaderstats.Cash.Value = plr.leaderstats.Cash.Value + 5
+		else
+			ore.Durability.Value = ore.Durability.Value - damage
+			-- Send an update to the client to adjust the health bar
+			game.ReplicatedStorage:WaitForChild("UpdateHealthBar"):FireClient(plr, ore.Durability.Value, ore.MaxDurability.Value)
+		end
+	end
+end)
