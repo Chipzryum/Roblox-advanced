@@ -1,0 +1,59 @@
+local MiningDataStore = game:GetService("DataStoreService"):GetDataStore("MiningDataStore")
+local MineEvent = game.ReplicatedStorage:WaitForChild("MineEvent")
+
+game.Players.PlayerAdded:Connect(function(plr)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = plr
+
+	local Cash = Instance.new("NumberValue")
+	Cash.Name = "Cash"
+	Cash.Value = 0
+	Cash.Parent = leaderstats
+
+	local Key = plr.UserId
+
+	local success, errormessage = pcall(function()
+		local Data = MiningDataStore:GetAsync(Key)
+
+		if Data then
+			Cash.Value = Data[1]
+		end
+	end)
+
+	while not success do
+		wait(5)
+		success, errormessage = pcall(function()
+			local Data = MiningDataStore:GetAsync(Key)
+			if Data then
+				Cash.Value = Data[1]
+			end
+		end)
+	end
+end)
+
+game.Players.PlayerRemoving:Connect(function(plr)
+	local Key = plr.UserId
+
+	local success, errormessage = pcall(function()
+		MiningDataStore:SetAsync(Key, {plr.leaderstats.Cash.Value})
+	end)
+
+	while not success do
+		wait(5)
+		success, errormessage = pcall(function()
+			MiningDataStore:SetAsync(Key, {plr.leaderstats.Cash.Value})
+		end)
+	end
+end)
+
+MineEvent.OnServerEvent:Connect(function(plr, ore)
+	if ore.Name == "Gold" then
+		if ore.Durability.Value <= 0 then
+			ore:Destroy()
+			plr.leaderstats.Cash.Value = plr.leaderstats.Cash.Value + 5
+		elseif ore.Durability.Value > 0 then
+			ore.Durability.Value = ore.Durability.Value - 5 
+		end
+	end
+end)
