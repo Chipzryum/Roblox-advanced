@@ -1,0 +1,42 @@
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local MineEvent = game.ReplicatedStorage:WaitForChild("Mining")
+local healthBarGui = player:WaitForChild("PlayerGui"):WaitForChild("HealthBarGui")
+local healthBar = healthBarGui:WaitForChild("Frame"):WaitForChild("HealthBar")  -- The frame representing health
+local maxHealthBarWidth = healthBarGui.Frame.AbsoluteSize.X
+
+-- Function to update the health bar in the player's GUI
+local function updateHealthBar(currentDurability, maxDurability)
+	local healthPercentage = currentDurability / maxDurability
+	healthBar:TweenSize(UDim2.new(healthPercentage, 0, 1, 0), "Out", "Quad", 0.5, true)
+end
+
+tool.Activated:Connect(function()
+	local target = mouse.Target
+	if target and target:FindFirstChild("Durability") then
+		MineEvent:FireServer(target, tool)
+		-- Update the health bar when the tool is activated
+		updateHealthBar(target.Durability.Value, target.MaxDurability.Value)
+	end
+end)
+
+-- Mining animation part
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://116904944297640"
+
+local debounce = false
+
+tool.Activated:Connect(function()
+	print("Tool Activated")
+	if debounce == false then
+		debounce = true
+		print(debounce)
+		tool.Parent:FindFirstChild("Humanoid").Animator:LoadAnimation(animation):Play()
+
+		wait(0.5)  -- Adding a short delay to prevent immediate reactivation
+
+		debounce = false
+	end
+end)
