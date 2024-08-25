@@ -1,0 +1,34 @@
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local mouse = player.GetMouse()
+local animation = Instance.new("Animation")
+local MineEvent = game.ReplicatedStorage.Mining
+
+script.Parent.Activated:Connect(function()
+	local target = mouse.Target
+	MineEvent:FireServer(target)
+end)
+
+
+
+
+
+-- mining animation part
+
+animation.AnimationId = "rbxassetid://116904944297640"
+
+local debounce = false
+
+tool.Activated:Connect(function()
+	print("Tool Activated")
+	if debounce == false then
+		debounce = true
+		print(debounce)
+		tool.Parent:FindFirstChild("Humanoid").Animator:LoadAnimation(animation):Play()
+		
+		wait(3)
+		
+		debounce = false
+
+	end
+end)
