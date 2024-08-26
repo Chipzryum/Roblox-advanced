@@ -1,0 +1,123 @@
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local MineEvent = game.ReplicatedStorage:WaitForChild("Mining")
+local UpdateHealthBar = game.ReplicatedStorage:WaitForChild("UpdateHealthBar")
+
+local isFirstClick = true  -- First click check
+
+-- Display health bar
+local function createHealthBar(ore)
+	-- Check if health bar GUI already exists
+	local existingGui = ore:FindFirstChild("HealthBarGui")
+	if existingGui then
+		-- Ensure the HealthBar frame exists within the existing GUI
+		local healthBar = existingGui:FindFirstChild("HealthBar")
+		if healthBar then
+			return healthBar  -- Return the existing health bar
+		else
+			-- If HealthBar doesn't exist, create it
+			local newHealthBar = Instance.new("Frame")
+			newHealthBar.Name = "HealthBar"
+			newHealthBar.AnchorPoint = Vector2.new(1, 0)  -- Anchor to the right side
+			newHealthBar.Position = UDim2.new(1, 0, 0, 0)  -- Start at the right side
+			newHealthBar.Size = UDim2.new(1, 0, 1, 0)
+			newHealthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+			newHealthBar.Parent = existingGui
+			return newHealthBar
+		end
+	else
+		-- If no GUI exists, create it
+		local billboardGui = Instance.new("BillboardGui")
+		billboardGui.Name = "HealthBarGui"
+		billboardGui.Adornee = ore
+		billboardGui.Size = UDim2.new(3, 0, 0.3, 0)  -- Size
+		billboardGui.StudsOffset = Vector3.new(0, 5, 0)  -- Offset
+		billboardGui.AlwaysOnTop = true
+		billboardGui.Parent = ore
+
+		-- Background
+		local frame = Instance.new("Frame")
+		frame.Size = UDim2.new(1, 0, 1, 0)
+		frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		frame.BackgroundTransparency = 0.5
+		frame.Parent = billboardGui
+
+		-- HealthBar
+		local healthBar = Instance.new("Frame")
+		healthBar.Name = "HealthBar"
+		healthBar.AnchorPoint = Vector2.new(1, 0)  -- Anchor to the right side
+		healthBar.Position = UDim2.new(1, 0, 0, 0)  -- Start at the right side
+		healthBar.Size = UDim2.new(1, 0, 1, 0)
+		healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+		healthBar.Parent = frame
+
+		return healthBar
+	end
+end
+
+-- Function to update the health bar in GUI
+local function updateHealthBar(healthBar, currentDurability, maxDurability)
+	if not currentDurability or not maxDurability then
+		warn("CurrentDurability or MaxDurability is nil!")
+		return
+	end
+
+	local healthPercentage = currentDurability / maxDurability
+
+	-- Update health bar size, scaling from right to left
+	healthBar:TweenSize(UDim2.new(healthPercentage, 0, 1, 0), "Out", "Quad", 0.5, true)
+
+	-- Update health bar color based on health percentage
+	if healthPercentage > 0.5 then
+		healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)  -- Green for high health
+	elseif healthPercentage > 0.2 then
+		healthBar.BackgroundColor3 = Color3.fromRGB(255, 255, 0)  -- Yellow for medium health
+	else
+		healthBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Red for low health
+	end
+end
+
+-- Handle tool activation
+local function onToolActivated()
+	local target = mouse.Target
+	if target and target:FindFirstChild("Durability") then
+		local healthBar = createHealthBar(target)
+
+		-- Send `isFirstClick` value to the server
+		MineEvent:FireServer(target, tool, isFirstClick)
+
+		-- After sending the first click, set isFirstClick to false
+		isFirstClick = false
+	end
+end
+
+-- Listen to health bar updates from the server
+UpdateHealthBar.OnClientEvent:Connect(function(ore, currentDurability, maxDurability)
+	local healthBar = ore:FindFirstChild("HealthBarGui") and ore.HealthBarGui:FindFirstChild("HealthBar")
+	if healthBar then
+		print("healthbar: " .. tostring(healthBar) .. ", durability: " .. tostring(currentDurability) .. ", max durability: " .. tostring(maxDurability))
+		updateHealthBar(healthBar, currentDurability, maxDurability)
+	end
+end)
+
+-- Connect the function to the tool's Activated event
+tool.Activated:Connect(onToolActivated)
+
+-- Mining animation part
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://116904944297640"
+
+local debounce = false
+
+tool.Activated:Connect(function()
+	if not debounce then
+		debounce = true
+		tool.Parent:FindFirstChild("Humanoid").Animator:LoadAnimation(animation):Play()
+
+		wait(0.5)  -- Adding a short delay
+
+		debounce = false
+	end
+end)
