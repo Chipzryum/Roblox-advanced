@@ -1,0 +1,153 @@
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local MineEvent = game.ReplicatedStorage:WaitForChild("Mining")
+local UpdateHealthBar = game.ReplicatedStorage:WaitForChild("UpdateHealthBar")
+
+local isFirstClick = true  -- First click check
+
+-- Display health bar
+local function createHealthBar(ore, currentDurability, maxDurability)
+	local existingGui = ore:FindFirstChild("HealthBarGui")
+	if existingGui then
+		local healthBar = existingGui:FindFirstChild("HealthBar")
+		if healthBar then
+			return healthBar
+		else
+			local newHealthBar = Instance.new("Frame")
+			newHealthBar.Name = "HealthBar"
+			newHealthBar.AnchorPoint = Vector2.new(1, 0)
+			newHealthBar.Position = UDim2.new(1, 0, 0, 0)
+			newHealthBar.Size = UDim2.new(1, 0, 1, 0)
+			newHealthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+			newHealthBar.Parent = existingGui
+			return newHealthBar
+		end
+	else
+		local billboardGui = Instance.new("BillboardGui")
+		billboardGui.Name = "HealthBarGui"
+		billboardGui.Adornee = ore
+		billboardGui.Size = UDim2.new(3, 0, 0.3, 0)
+		billboardGui.StudsOffset = Vector3.new(0, 5, 0)
+		billboardGui.AlwaysOnTop = true
+		billboardGui.Parent = ore
+
+		local frame = Instance.new("Frame")
+		frame.Size = UDim2.new(1, 0, 1, 0)
+		frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		frame.BackgroundTransparency = 0.5
+		frame.Parent = billboardGui
+
+		local healthBar = Instance.new("Frame")
+		healthBar.Name = "HealthBar"
+		healthBar.AnchorPoint = Vector2.new(1, 0)
+		healthBar.Position = UDim2.new(1, 0, 0, 0)
+		healthBar.Size = UDim2.new(1, 0, 1, 0)
+		healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+		healthBar.Parent = frame
+
+		if type(currentDurability) ~= "number" or type(maxDurability) ~= "number" then
+			warn("CurrentDurability or MaxDurability is not a number!")
+			return
+		end
+
+		local healthPercentage = currentDurability / maxDurability
+
+		-- Smoothly update the size of the health bar
+		healthBar:TweenSize(UDim2.new(healthPercentage, 0, 1, 0), "Out", "Quad", 0.5, true)
+
+		-- Transition color from green to red based on health percentage
+		local redComponent = 255 * (1 - healthPercentage)  -- Increase red as health decreases
+		local greenComponent = 255 * healthPercentage      -- Decrease green as health decreases
+
+		-- Ensure the color components are within valid range
+		redComponent = math.clamp(redComponent, 0, 255)
+		greenComponent = math.clamp(greenComponent, 0, 255)
+
+		-- Set the health bar color
+		healthBar.BackgroundColor3 = Color3.fromRGB(redComponent, greenComponent, 0)
+
+		return healthBar
+	end
+end
+
+-- Function to update the health bar in GUI
+local function updateHealthBar(healthBar, currentDurability, maxDurability)
+	if type(currentDurability) ~= "number" or type(maxDurability) ~= "number" then
+		warn("CurrentDurability or MaxDurability is not a number!")
+		return
+	end
+
+	local healthPercentage = currentDurability / maxDurability
+
+	-- Smoothly update the size of the health bar
+	healthBar:TweenSize(UDim2.new(healthPercentage, 0, 1, 0), "Out", "Quad", 0.5, true)
+
+	-- Transition color from green to red based on health percentage
+	local redComponent = 255 * (1 - healthPercentage)  -- Increase red as health decreases
+	local greenComponent = 255 * healthPercentage      -- Decrease green as health decreases
+
+	-- Ensure the color components are within valid range
+	redComponent = math.clamp(redComponent, 0, 255)
+	greenComponent = math.clamp(greenComponent, 0, 255)
+
+	-- Set the health bar color
+	healthBar.BackgroundColor3 = Color3.fromRGB(redComponent, greenComponent, 0)
+end
+
+-- Handle tool activation
+
+local lastTarget 
+
+local function onToolActivated()
+	local target = mouse.Target
+	if target and target:FindFirstChild("Durability") then
+		-- Check if the player is targeting a new block
+		local isFirstClick = (target ~= lastTarget)
+		lastTarget = target  -- Update the last target to the current one
+
+		local durability = target:FindFirstChild("Durability")
+		local maxDurability = target:FindFirstChild("MaxDurability")
+
+		if durability and maxDurability then
+			local currentDurability = durability.Value
+			local maxDurabilityValue = maxDurability.Value
+
+			-- Ensure health bar is created and updated with the current durability
+			local healthBar = createHealthBar(target, currentDurability, maxDurabilityValue)
+
+			-- Send `isFirstClick` value to the server
+			MineEvent:FireServer(target, tool, isFirstClick)
+		end
+	end
+end
+
+
+-- Listen to health bar updates from the server
+UpdateHealthBar.OnClientEvent:Connect(function(ore, currentDurability, maxDurability)
+	local healthBar = ore:FindFirstChild("HealthBarGui") and ore.HealthBarGui:FindFirstChild("HealthBar")
+	if healthBar then
+		print("Updating health bar with durability: " .. tostring(currentDurability) .. ", maxDurability: " .. tostring(maxDurability))
+		updateHealthBar(healthBar, currentDurability, maxDurability)
+	end
+end)
+
+tool.Activated:Connect(onToolActivated)
+
+-- Mining animation part
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://116904944297640"
+
+local debounce = false
+
+tool.Activated:Connect(function()
+	if not debounce then
+		debounce = true
+		tool.Parent:FindFirstChild("Humanoid").Animator:LoadAnimation(animation):Play()
+
+		wait(0.5)  -- Adding a short delay
+
+		debounce = false
+	end
+end)
